@@ -22,7 +22,7 @@
          WindowsAppSDKSelfContained=true - that combination has an unresolved WinAppSDK bug, which
          is why the release pipeline ships MSIX instead (see build-release.yml). -->
     <WindowsAppSDKUndockedRegFreeWinRTInitialize>true</WindowsAppSDKUndockedRegFreeWinRTInitialize>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <!-- Allows `dotnet build`/`dotnet restore` to at least resolve this Windows-targeted TFM from non-Windows CI/dev machines. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
