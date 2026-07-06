@@ -1,0 +1,28 @@
+<UserControl
+    x:Class="PowerID.Views.Settings.AboutSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Padding="30">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="20" MaxWidth="360">
+            <TextBlock Text="&#9889;" FontSize="60" HorizontalAlignment="Center" />
+
+            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                <TextBlock Text="Power ID" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" />
+                <TextBlock Text="Version 1.0.0" FontSize="13" Opacity="0.7" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Spacing="8" HorizontalAlignment="Center">
+                <TextBlock Text="Advanced Battery Monitoring for Windows. Made with intent."
+                           TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" />
+                <TextBlock Text="© 2026 Power ID. All rights reserved." FontSize="12" Opacity="0.6"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
+                <Button Content="GitHub" Click="GitHubButton_Click" />
+                <Button Content="Report Issue" Click="ReportIssueButton_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,10 @@
+<UserControl
+    x:Class="PowerID.Views.Components.BatteryProgressBar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Border CornerRadius="8" Background="Gray" Opacity="0.2" />
+        <Rectangle x:Name="FillRect" HorizontalAlignment="Left" RadiusX="8" RadiusY="8" />
+    </Grid>
+</UserControl>

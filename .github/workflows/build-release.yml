@@ -1,0 +1,124 @@
+name: Build and Release PowerID
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install icon generator dependencies
+      run: pip install --quiet Pillow
+
+    - name: Generate app icons
+      run: python generate_icon.py
+      shell: pwsh
+
+    - name: Restore dependencies
+      run: dotnet restore PowerID.sln
+
+    - name: Build (Release, x64)
+      run: dotnet build PowerID.sln -c Release -p:Platform=x64 --no-restore
+
+  publish:
+    needs: build
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install icon generator dependencies
+      run: pip install --quiet Pillow
+
+    - name: Generate app icons
+      run: python generate_icon.py
+      shell: pwsh
+
+    - name: Publish self-contained x64 build
+      run: |
+        dotnet publish PowerID/PowerID.csproj `
+          -c Release `
+          -p:Platform=x64 `
+          -p:WindowsPackageType=None `
+          -p:WindowsAppSDKSelfContained=true `
+          -p:SelfContained=true `
+          -r win-x64 `
+          -o publish/PowerID
+      shell: pwsh
+
+    - name: Create ZIP archive
+      run: Compress-Archive -Path publish/PowerID/* -DestinationPath PowerID-win-x64.zip
+      shell: pwsh
+
+    - name: Get version from tag
+      id: get_version
+      run: |
+        if ("${{ github.ref }}".StartsWith("refs/tags/v")) {
+          $version = "${{ github.ref }}".Substring(11)
+        } else {
+          $version = "dev-$($env:GITHUB_SHA.Substring(0,7))"
+        }
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: PowerID-win-x64.zip
+        name: PowerID v${{ steps.get_version.outputs.version }}
+        body: |
+          ## PowerID v${{ steps.get_version.outputs.version }}
+
+          Advanced Battery Monitoring for Windows
+
+          ### Installation
+          1. Download `PowerID-win-x64.zip`
+          2. Unzip it anywhere
+          3. Run `PowerID.exe`
+
+          ### Note
+          This build is unsigned. Windows SmartScreen may warn on first launch -
+          choose "More info" > "Run anyway".
+
+          ### System Requirements
+          - Windows 10 version 1809 (build 17763) or later, x64
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifact (for manual runs)
+      if: github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v4
+      with:
+        name: PowerID-${{ steps.get_version.outputs.version }}
+        path: PowerID-win-x64.zip
+        retention-days: 30

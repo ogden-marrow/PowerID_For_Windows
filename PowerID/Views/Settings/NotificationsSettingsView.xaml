@@ -1,0 +1,18 @@
+<UserControl
+    x:Class="PowerID.Views.Settings.NotificationsSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Padding="24" Spacing="16">
+        <ToggleSwitch x:Name="NotificationsToggle" Header="Enable notifications" Toggled="NotificationsToggle_Toggled" />
+
+        <StackPanel x:Name="NotificationInfoPanel" Spacing="8" Padding="20,0,0,0">
+            <TextBlock Text="Get notified about:" FontSize="13" Opacity="0.7" />
+            <StackPanel Spacing="4">
+                <TextBlock Text="&#128267; Low battery (&lt; 20%)" FontSize="12" Opacity="0.7" />
+                <TextBlock Text="&#9889; Battery fully charged" FontSize="12" Opacity="0.7" />
+                <TextBlock Text="&#9888;&#65039; Battery health issues" FontSize="12" Opacity="0.7" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

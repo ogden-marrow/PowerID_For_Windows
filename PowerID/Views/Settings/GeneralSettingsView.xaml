@@ -1,0 +1,25 @@
+<UserControl
+    x:Class="PowerID.Views.Settings.GeneralSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Padding="24" Spacing="16">
+        <StackPanel Spacing="8">
+            <TextBlock Text="Update Interval" FontWeight="SemiBold" />
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <Slider x:Name="UpdateIntervalSlider" Width="260" Minimum="1" Maximum="10" StepFrequency="1"
+                        ValueChanged="UpdateIntervalSlider_ValueChanged" />
+                <TextBlock x:Name="UpdateIntervalLabel" Width="40" Opacity="0.7" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Text="How often battery information is refreshed" FontSize="12" Opacity="0.6" />
+        </StackPanel>
+
+        <Border BorderThickness="0,1,0,0" BorderBrush="Gray" Opacity="0.3" Margin="0,4" />
+
+        <ToggleSwitch x:Name="ShowInTrayToggle" Header="Show in system tray"
+                      Toggled="ShowInTrayToggle_Toggled" />
+
+        <ToggleSwitch x:Name="LaunchAtLoginToggle" Header="Launch at login"
+                      Toggled="LaunchAtLoginToggle_Toggled" />
+    </StackPanel>
+</UserControl>

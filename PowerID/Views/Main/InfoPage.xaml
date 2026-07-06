@@ -1,0 +1,72 @@
+<Page
+    x:Class="PowerID.Views.Main.InfoPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:components="using:PowerID.Views.Components"
+    mc:Ignorable="d"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+
+    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="About Battery Data" FontSize="24" FontWeight="Bold"
+                   HorizontalAlignment="Center" Padding="0,20" />
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="24" Padding="30,0,30,30">
+
+                <components:InfoSection
+                    Icon="&#128267;" Title="Battery Level"
+                    Description="The current charge level of your battery as a percentage. This shows how much energy remains compared to your battery's current maximum capacity." />
+
+                <components:InfoSection
+                    Icon="&#10084;&#65039;" Title="Battery Health"
+                    Description="Compares your battery's current maximum capacity to its original design capacity. A healthy battery typically shows 80% or higher. As batteries age through normal use, this percentage gradually decreases." />
+
+                <components:InfoSection
+                    Icon="&#128260;" Title="Cycle Count"
+                    Description="The number of complete charge-discharge cycles your battery has gone through. One cycle equals using 100% of your battery's capacity (not necessarily in one charge). Most laptop batteries are designed for up to 1000 cycles." />
+
+                <components:InfoSection
+                    Icon="&#128267;" Title="Capacity (mAh)"
+                    Description="Measured in milliamp-hours (mAh), this indicates how much charge your battery can hold. Current Capacity is what it holds now, Maximum Capacity is what it can currently hold when fully charged, and Design Capacity is what it held when new." />
+
+                <components:InfoSection
+                    Icon="&#9889;" Title="Voltage &amp; Amperage"
+                    Description="Voltage (V) is the electrical potential of your battery. Amperage (mA) is the current flow - positive when charging, negative when discharging. Together they determine the charging or discharging rate." />
+
+                <components:InfoSection
+                    Icon="&#128268;" Title="Power Draw / Wattage"
+                    Description="Measured in watts (W), this shows how much power is flowing to or from your battery. Calculated by multiplying voltage and amperage (W = V x A). Higher wattage means faster charging or more power consumption." />
+
+                <components:InfoSection
+                    Icon="&#127777;&#65039;" Title="Temperature"
+                    Description="Your battery's current temperature in Celsius. Normal operating range is typically 10-35 degrees C. Extreme temperatures can affect battery performance and longevity. Not all devices report this value." />
+
+                <components:InfoSection
+                    Icon="&#8986;" Title="Time to Full Charge"
+                    Description="An estimate of how long it will take to fully charge your battery at the current charging rate. This appears only when your PC is charging and updates as conditions change." />
+
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="&#128161;" FontSize="16" />
+                        <TextBlock Text="Battery Care Tips" FontSize="16" FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <Border CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="16,12">
+                        <StackPanel Spacing="8">
+                            <components:TipRow Text="Keep your battery between 20-80% for optimal longevity" />
+                            <components:TipRow Text="Avoid extreme temperatures (too hot or too cold)" />
+                            <components:TipRow Text="Keep Windows updated for battery and driver optimizations" />
+                            <components:TipRow Text="Use Windows' battery saver / recommended power modes" />
+                            <components:TipRow Text="A cycle count under 1000 is generally healthy" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

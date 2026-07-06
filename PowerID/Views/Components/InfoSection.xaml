@@ -1,0 +1,13 @@
+<UserControl
+    x:Class="PowerID.Views.Components.InfoSection"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock x:Name="IconText" FontSize="18" Width="24" />
+            <TextBlock x:Name="TitleText" FontSize="16" FontWeight="SemiBold" />
+        </StackPanel>
+        <TextBlock x:Name="DescriptionText" Opacity="0.7" TextWrapping="Wrap" />
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,84 @@
+<Page
+    x:Class="PowerID.Views.Main.DetailsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:components="using:PowerID.Views.Components"
+    xmlns:utils="using:PowerID.Utilities"
+    mc:Ignorable="d"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+
+    <Page.Resources>
+        <utils:GreaterThanZeroToVisibilityConverter x:Key="PositiveToVisibility" />
+        <Style x:Key="SectionCardStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+        </Style>
+    </Page.Resources>
+
+    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Battery Details" FontSize="24" FontWeight="Bold"
+                   HorizontalAlignment="Center" Padding="0,20" />
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="24" Padding="30,0,30,30">
+
+                <!-- Capacity -->
+                <StackPanel Spacing="12">
+                    <components:SectionHeader Icon="&#128267;" Title="Capacity" />
+                    <Border Style="{StaticResource SectionCardStyle}">
+                        <StackPanel>
+                            <components:DetailRow Label="Current Capacity" Value="{x:Bind FormatMah(BatteryMonitor.CurrentCapacity), Mode=OneWay}" />
+                            <components:DetailRow Label="Maximum Capacity" Value="{x:Bind FormatMah(BatteryMonitor.MaxCapacity), Mode=OneWay}" />
+                            <components:DetailRow Label="Design Capacity" Value="{x:Bind FormatMah(BatteryMonitor.DesignCapacity), Mode=OneWay}" />
+                            <components:DetailRow Label="Battery Level" Value="{x:Bind FormatPercent(BatteryMonitor.BatteryLevel), Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Electrical -->
+                <StackPanel Spacing="12">
+                    <components:SectionHeader Icon="&#9889;" Title="Electrical" />
+                    <Border Style="{StaticResource SectionCardStyle}">
+                        <StackPanel>
+                            <components:DetailRow Label="Voltage" Value="{x:Bind FormatVoltage(BatteryMonitor.Voltage), Mode=OneWay}" />
+                            <components:DetailRow Label="Amperage" Value="{x:Bind FormatAmperage(BatteryMonitor.Amperage), Mode=OneWay}" />
+                            <components:DetailRow Label="Power Draw" Value="{x:Bind FormatWattage(BatteryMonitor.ChargingWattage), Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Health & Lifecycle -->
+                <StackPanel Spacing="12">
+                    <components:SectionHeader Icon="&#10084;&#65039;" Title="Health &amp; Lifecycle" />
+                    <Border Style="{StaticResource SectionCardStyle}">
+                        <StackPanel>
+                            <components:DetailRow Label="Battery Health" Value="{x:Bind FormatPercent(BatteryMonitor.BatteryHealth), Mode=OneWay}" />
+                            <components:DetailRow Label="Cycle Count" Value="{x:Bind BatteryMonitor.CycleCount, Mode=OneWay}" />
+                            <components:DetailRow Label="Temperature" Value="{x:Bind FormatTemperature(BatteryMonitor.Temperature), Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Power Source -->
+                <StackPanel Spacing="12">
+                    <components:SectionHeader Icon="&#128268;" Title="Power Source" />
+                    <Border Style="{StaticResource SectionCardStyle}">
+                        <StackPanel>
+                            <components:DetailRow Label="Status" Value="{x:Bind ChargingStatusText(BatteryMonitor.IsCharging), Mode=OneWay}" />
+                            <components:DetailRow Label="Type" Value="{x:Bind BatteryMonitor.PowerSourceType, Mode=OneWay}" />
+                            <components:DetailRow
+                                Visibility="{x:Bind BatteryMonitor.TimeToFullCharge, Mode=OneWay, Converter={StaticResource PositiveToVisibility}}"
+                                Label="Time to Full Charge"
+                                Value="{x:Bind utils:BatteryFormatter.FormatTime(BatteryMonitor.TimeToFullCharge), Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

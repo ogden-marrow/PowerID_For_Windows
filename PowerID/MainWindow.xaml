@@ -1,0 +1,24 @@
+<Window
+    x:Class="PowerID.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls">
+
+    <Grid>
+        <controls:NavigationView
+            x:Name="RootNavigationView"
+            PaneDisplayMode="Top"
+            IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="True"
+            SelectionFollowsFocus="Disabled"
+            SelectionChanged="RootNavigationView_SelectionChanged"
+            Loaded="RootNavigationView_Loaded">
+            <controls:NavigationView.MenuItems>
+                <controls:NavigationViewItem Content="Overview" Tag="Overview" IsSelected="True" />
+                <controls:NavigationViewItem Content="Details" Tag="Details" />
+                <controls:NavigationViewItem Content="Info" Tag="Info" />
+            </controls:NavigationView.MenuItems>
+            <Frame x:Name="ContentFrame" />
+        </controls:NavigationView>
+    </Grid>
+</Window>

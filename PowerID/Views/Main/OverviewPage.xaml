@@ -1,0 +1,85 @@
+<Page
+    x:Class="PowerID.Views.Main.OverviewPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:components="using:PowerID.Views.Components"
+    xmlns:utils="using:PowerID.Utilities"
+    mc:Ignorable="d"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+
+    <Page.Resources>
+        <utils:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+        <utils:GreaterThanZeroToVisibilityConverter x:Key="PositiveToVisibility" />
+    </Page.Resources>
+
+    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Padding="0,16">
+            <TextBlock Text="&#9889;" FontSize="50" HorizontalAlignment="Center" />
+            <TextBlock Text="Power ID" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="30" Padding="40,0,40,20">
+
+                <!-- Battery Level -->
+                <StackPanel Spacing="20">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                        <TextBlock Text="{x:Bind BatteryMonitor.BatteryLevel, Mode=OneWay}"
+                                   FontSize="80" FontWeight="Bold"
+                                   Foreground="{x:Bind utils:BatteryFormatter.BatteryGradientBrush(BatteryMonitor.BatteryLevel, BatteryMonitor.IsCharging), Mode=OneWay}" />
+                        <TextBlock Text="%" FontSize="40" Opacity="0.6" VerticalAlignment="Bottom" Margin="0,0,0,12" />
+                    </StackPanel>
+
+                    <components:BatteryProgressBar
+                        Height="16"
+                        Level="{x:Bind BatteryMonitor.BatteryLevel, Mode=OneWay}"
+                        GradientBrush="{x:Bind utils:BatteryFormatter.BatteryGradientBrush(BatteryMonitor.BatteryLevel, BatteryMonitor.IsCharging), Mode=OneWay}" />
+                </StackPanel>
+
+                <!-- Status Cards -->
+                <StackPanel Spacing="16">
+                    <components:StatusCard
+                        Icon="{x:Bind ChargingGlyph(BatteryMonitor.IsCharging), Mode=OneWay}"
+                        Title="Status"
+                        Value="{x:Bind ChargingStatusText(BatteryMonitor.IsCharging), Mode=OneWay}"
+                        AccentColor="{x:Bind StatusColor(BatteryMonitor.IsCharging), Mode=OneWay}" />
+
+                    <components:StatusCard
+                        Visibility="{x:Bind BatteryMonitor.IsCharging, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Icon="&#128268;"
+                        Title="Charging Power"
+                        Value="{x:Bind FormatWattage(BatteryMonitor.ChargingWattage), Mode=OneWay}"
+                        AccentColor="Orange" />
+
+                    <components:StatusCard
+                        Visibility="{x:Bind ShowTimeToFull(BatteryMonitor.IsCharging, BatteryMonitor.TimeToFullCharge), Mode=OneWay}"
+                        Icon="&#8986;"
+                        Title="Time to Full Charge"
+                        Value="{x:Bind utils:BatteryFormatter.FormatTime(BatteryMonitor.TimeToFullCharge), Mode=OneWay}"
+                        AccentColor="MediumPurple" />
+
+                    <components:StatusCard
+                        Icon="&#10084;&#65039;"
+                        Title="Battery Health"
+                        Value="{x:Bind FormatPercent(BatteryMonitor.BatteryHealth), Mode=OneWay}"
+                        AccentColor="{x:Bind utils:BatteryFormatter.HealthColor(BatteryMonitor.BatteryHealth), Mode=OneWay}" />
+
+                    <components:StatusCard
+                        Icon="&#128260;"
+                        Title="Cycle Count"
+                        Value="{x:Bind BatteryMonitor.CycleCount, Mode=OneWay}"
+                        AccentColor="MediumSlateBlue" />
+                </StackPanel>
+
+                <TextBlock HorizontalAlignment="Center" Opacity="0.6" FontSize="12"
+                           Text="{x:Bind FormatLastUpdated(BatteryMonitor.LastUpdate), Mode=OneWay}" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
