@@ -38,7 +38,29 @@ jobs:
       run: dotnet restore PowerID.sln
 
     - name: Build (Release, x64)
-      run: dotnet build PowerID.sln -c Release -p:Platform=x64 --no-restore
+      run: dotnet build PowerID.sln -c Release -p:Platform=x64 --no-restore -v:normal
+
+    - name: Dump XAML compiler diagnostics on failure
+      if: failure()
+      shell: pwsh
+      run: |
+        $objDir = "PowerID/obj/x64/Release/net8.0-windows10.0.19041.0"
+        Get-ChildItem -Path $objDir -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
+          Write-Host "----- $($_.FullName) -----"
+          Get-Content $_.FullName
+        }
+        Get-ChildItem -Path $objDir -Recurse -Include *.log,*.err -ErrorAction SilentlyContinue | ForEach-Object {
+          Write-Host "----- $($_.FullName) -----"
+          Get-Content $_.FullName
+        }
+
+    - name: Upload obj directory on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: xaml-compiler-diagnostics
+        path: PowerID/obj/x64/Release/net8.0-windows10.0.19041.0
+        retention-days: 7
 
   publish:
     needs: build
