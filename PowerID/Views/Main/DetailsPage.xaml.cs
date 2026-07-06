@@ -22,17 +22,17 @@ public sealed partial class DetailsPage : Page
         InitializeComponent();
     }
 
-    private static string FormatMah(int value) => $"{value} mAh";
+    private string FormatMah(int value) => $"{value} mAh";
 
-    private static string FormatPercent(int value) => $"{value}%";
+    private string FormatPercent(int value) => $"{value}%";
 
-    private static string FormatVoltage(double value) => $"{value:0.00} V";
+    private string FormatVoltage(double value) => $"{value:0.00} V";
 
-    private static string FormatAmperage(double value) => $"{value:0} mA";
+    private string FormatAmperage(double value) => $"{value:0} mA";
 
-    private static string FormatWattage(double value) => $"{value:0.00} W";
+    private string FormatWattage(double value) => $"{value:0.00} W";
 
-    private static string FormatTemperature(double value) => $"{value:0.0} °C";
+    private string FormatTemperature(double value) => $"{value:0.0} °C";
 
-    private static string ChargingStatusText(bool isCharging) => isCharging ? "Charging" : "On Battery";
+    private string ChargingStatusText(bool isCharging) => isCharging ? "Charging" : "On Battery";
 }
