@@ -125,11 +125,21 @@ jobs:
     # fine, but MSIX sidesteps the whole class of problem: packaged apps get WinRT activation
     # through package identity, so we ship a signed MSIX instead. This is also exactly the artifact
     # format the Microsoft Store submission pipeline needs.
-    - name: Decode signing certificate
+    # PackageCertificateKeyFile/PackageCertificatePassword look like the right MSBuild properties
+    # for signing from a raw PFX, but the modern WinAppSdkSignAppxPackage task (see
+    # Microsoft.Build.Msix.Packaging.targets) never actually reads PackageCertificatePassword - it
+    # only accepts a certificate already resolved via PackageCertificateThumbprint. Passing a
+    # password-protected PFX as CertificateFile fails with a misleading "may be password protected"
+    # error regardless of whether the password is correct. Fix: import the PFX into the runner's
+    # cert store first (password used only for that import), then sign by thumbprint.
+    - name: Decode and import signing certificate
       shell: pwsh
       run: |
         $pfxBytes = [Convert]::FromBase64String("${{ secrets.POWERID_PFX_BASE64 }}")
         [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\PowerID.pfx", $pfxBytes)
+        $securePwd = ConvertTo-SecureString -String "${{ secrets.POWERID_PFX_PASSWORD }}" -Force -AsPlainText
+        $cert = Import-PfxCertificate -FilePath "$env:RUNNER_TEMP\PowerID.pfx" -CertStoreLocation Cert:\CurrentUser\My -Password $securePwd
+        echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
 
     - name: Build signed MSIX package
       run: |
@@ -143,8 +153,7 @@ jobs:
           /p:GenerateAppInstallerFile=false `
           /p:AppxPackageDir=AppPackages\ `
           /p:AppxPackageSigningEnabled=true `
-          /p:PackageCertificateKeyFile="$env:RUNNER_TEMP\PowerID.pfx" `
-          /p:PackageCertificatePassword="${{ secrets.POWERID_PFX_PASSWORD }}" `
+          /p:PackageCertificateThumbprint="$env:CERT_THUMBPRINT" `
           /nr:false
       shell: pwsh
 
