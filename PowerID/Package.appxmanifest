@@ -7,15 +7,15 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="PowerID.BatteryMonitor"
-    Publisher="CN=PowerID"
+    Name="OgdenMarrow.PowerID"
+    Publisher="CN=0CF9959E-AE83-480F-B824-2AA0875CE061"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>PowerID</DisplayName>
-    <PublisherDisplayName>PowerID Contributors</PublisherDisplayName>
+    <PublisherDisplayName>OgdenMarrow</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
