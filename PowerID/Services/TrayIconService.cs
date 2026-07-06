@@ -132,9 +132,8 @@ public sealed class TrayIconService : IDisposable
     {
         var menu = NativeMethods.CreatePopupMenu();
 
-        var statusText = _batteryMonitor.IsCharging ? "Charging" : "On Battery";
         NativeMethods.AppendMenu(menu, MfString | MfGrayed, (UIntPtr)1000, $"Battery: {_batteryMonitor.BatteryLevel}%");
-        NativeMethods.AppendMenu(menu, MfString | MfGrayed, (UIntPtr)1001, $"Status: {statusText}");
+        NativeMethods.AppendMenu(menu, MfString | MfGrayed, (UIntPtr)1001, $"Status: {_batteryMonitor.StatusText}");
         NativeMethods.AppendMenu(menu, MfString | MfGrayed, (UIntPtr)1002, $"Health: {_batteryMonitor.BatteryHealth}%");
         NativeMethods.AppendMenu(menu, MfSeparator, UIntPtr.Zero, string.Empty);
         NativeMethods.AppendMenu(menu, MfString, (UIntPtr)CmdShow, "Show PowerID");
@@ -179,7 +178,6 @@ public sealed class TrayIconService : IDisposable
 
     private NotifyIconData NewIconData()
     {
-        var statusText = _batteryMonitor.IsCharging ? "Charging" : "On Battery";
         return new NotifyIconData
         {
             cbSize = Marshal.SizeOf<NotifyIconData>(),
@@ -188,7 +186,7 @@ public sealed class TrayIconService : IDisposable
             uFlags = NifIcon | NifTip | NifMessage,
             uCallbackMessage = WmTrayCallback,
             hIcon = _currentIconHandle,
-            szTip = $"PowerID - {_batteryMonitor.BatteryLevel}% ({statusText})",
+            szTip = $"PowerID - {_batteryMonitor.BatteryLevel}% ({_batteryMonitor.StatusText})",
         };
     }
 

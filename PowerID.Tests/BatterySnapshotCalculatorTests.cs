@@ -98,6 +98,24 @@ public class BatterySnapshotCalculatorTests
         Assert.Equal(0, snapshot.Level);
     }
 
+    [Fact]
+    public void Compute_WhenDesignVoltageIsMissing_FallsBackToCurrentVoltageForLevel()
+    {
+        // Some OEM firmware doesn't expose BatteryStaticData (no DesignVoltage) over WMI at all,
+        // even though BatteryStatus/BatteryFullChargedCapacity - different WMI classes - report
+        // real capacities. Falling back to current voltage should still yield a sensible level
+        // rather than collapsing everything to 0.
+        var reading = Reading(
+            designVoltageMv: 0,
+            voltageMv: 12000,
+            fullChargeCapacityMWh: 60000,
+            remainingCapacityMWh: 60000);
+
+        var snapshot = BatterySnapshotCalculator.Compute(reading, Now);
+
+        Assert.Equal(100, snapshot.Level);
+    }
+
     [Theory]
     [InlineData(60000u, 60000u, 100)]  // brand new
     [InlineData(60000u, 30000u, 50)]   // half worn out
@@ -125,15 +143,20 @@ public class BatterySnapshotCalculatorTests
     }
 
     [Fact]
-    public void Compute_WhenDesignVoltageIsZero_AllCapacitiesAreZeroNotDivideByZero()
+    public void Compute_WhenDesignVoltageIsZero_FallsBackToCurrentVoltageInsteadOfDivideByZero()
     {
-        var reading = Reading(designVoltageMv: 0);
+        var reading = Reading(
+            designVoltageMv: 0,
+            voltageMv: 12000,
+            designCapacityMWh: 60000,
+            fullChargeCapacityMWh: 55000,
+            remainingCapacityMWh: 27500);
 
         var snapshot = BatterySnapshotCalculator.Compute(reading, Now);
 
-        Assert.Equal(0, snapshot.DesignCapacity);
-        Assert.Equal(0, snapshot.MaxCapacity);
-        Assert.Equal(0, snapshot.CurrentCapacity);
+        Assert.Equal(5000, snapshot.DesignCapacity);
+        Assert.Equal(4583, snapshot.MaxCapacity);
+        Assert.Equal(2292, snapshot.CurrentCapacity);
     }
 
     [Fact]
@@ -246,5 +269,60 @@ public class BatterySnapshotCalculatorTests
 
         Assert.True(BatterySnapshotCalculator.Compute(charging, Now).IsCharging);
         Assert.False(BatterySnapshotCalculator.Compute(discharging, Now).IsCharging);
+    }
+
+    [Fact]
+    public void StatusText_WhenCharging_ReturnsCharging()
+    {
+        var reading = Reading(charging: true, discharging: false, powerOnline: true);
+
+        var snapshot = BatterySnapshotCalculator.Compute(reading, Now);
+
+        Assert.Equal("Charging", BatterySnapshotCalculator.StatusText(snapshot));
+    }
+
+    [Fact]
+    public void StatusText_WhenOnBatteryAndNotCharging_ReturnsOnBattery()
+    {
+        var reading = Reading(charging: false, discharging: true, powerOnline: false);
+
+        var snapshot = BatterySnapshotCalculator.Compute(reading, Now);
+
+        Assert.Equal("On Battery", BatterySnapshotCalculator.StatusText(snapshot));
+    }
+
+    [Fact]
+    public void StatusText_WhenPluggedInAndFull_ReturnsFullyCharged()
+    {
+        // Regression test: a laptop plugged into AC power with a fully charged battery reports
+        // Charging=false (nothing left to charge) - this must not be shown as "On Battery", which
+        // contradicts PowerSourceType="AC Power" shown right next to it in the Details tab.
+        var reading = Reading(
+            charging: false,
+            discharging: false,
+            powerOnline: true,
+            fullChargeCapacityMWh: 40000,
+            remainingCapacityMWh: 40000);
+
+        var snapshot = BatterySnapshotCalculator.Compute(reading, Now);
+
+        Assert.Equal(100, snapshot.Level);
+        Assert.Equal("Fully Charged", BatterySnapshotCalculator.StatusText(snapshot));
+    }
+
+    [Fact]
+    public void StatusText_WhenPluggedInButNotYetFull_ReturnsPluggedIn()
+    {
+        var reading = Reading(
+            charging: false,
+            discharging: false,
+            powerOnline: true,
+            fullChargeCapacityMWh: 40000,
+            remainingCapacityMWh: 20000);
+
+        var snapshot = BatterySnapshotCalculator.Compute(reading, Now);
+
+        Assert.Equal(50, snapshot.Level);
+        Assert.Equal("Plugged In", BatterySnapshotCalculator.StatusText(snapshot));
     }
 }

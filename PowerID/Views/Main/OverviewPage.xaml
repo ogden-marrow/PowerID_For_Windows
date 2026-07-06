@@ -45,7 +45,7 @@
                     <components:StatusCard
                         Icon="{x:Bind ChargingGlyph(BatteryMonitor.IsCharging), Mode=OneWay}"
                         Title="Status"
-                        Value="{x:Bind ChargingStatusText(BatteryMonitor.IsCharging), Mode=OneWay}"
+                        Value="{x:Bind BatteryMonitor.StatusText, Mode=OneWay}"
                         AccentColor="{x:Bind StatusColor(BatteryMonitor.IsCharging), Mode=OneWay}" />
 
                     <components:StatusCard

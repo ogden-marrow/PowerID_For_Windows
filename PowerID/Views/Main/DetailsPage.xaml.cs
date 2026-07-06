@@ -33,6 +33,4 @@ public sealed partial class DetailsPage : Page
     private string FormatWattage(double value) => $"{value:0.00} W";
 
     private string FormatTemperature(double value) => $"{value:0.0} °C";
-
-    private string ChargingStatusText(bool isCharging) => isCharging ? "Charging" : "On Battery";
 }

@@ -28,8 +28,6 @@ public sealed partial class OverviewPage : Page
 
     private string ChargingGlyph(bool isCharging) => isCharging ? "⚡" : "\U0001F50B";
 
-    private string ChargingStatusText(bool isCharging) => isCharging ? "Charging" : "On Battery";
-
     private Color StatusColor(bool isCharging) => isCharging ? Colors.Green : Colors.DodgerBlue;
 
     private string FormatWattage(double wattage) => $"{wattage:0.0} W";

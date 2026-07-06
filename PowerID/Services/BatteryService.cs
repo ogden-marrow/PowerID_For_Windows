@@ -19,70 +19,50 @@ public sealed class BatteryService
         try
         {
             uint designCapacity = 0, designVoltage = 0;
-            using (var searcher = new ManagementObjectSearcher(Scope, "SELECT * FROM BatteryStaticData"))
+            QueryFirstInstance("BatteryStaticData", obj =>
             {
-                foreach (ManagementObject obj in searcher.Get())
-                {
-                    designCapacity = Convert.ToUInt32(obj["DesignedCapacity"]);
-                    designVoltage = Convert.ToUInt32(obj["DesignedVoltage"]);
-                    break;
-                }
-            }
+                // Not every OEM driver populates every optional field on this class (e.g. some
+                // report DesignedCapacity but omit DesignedVoltage entirely) - read each property
+                // independently so one missing field doesn't discard the others.
+                designCapacity = GetUInt32OrDefault(obj, "DesignedCapacity");
+                designVoltage = GetUInt32OrDefault(obj, "DesignedVoltage");
+            });
 
             uint fullChargeCapacity = 0;
-            using (var searcher = new ManagementObjectSearcher(Scope, "SELECT * FROM BatteryFullChargedCapacity"))
+            QueryFirstInstance("BatteryFullChargedCapacity", obj =>
             {
-                foreach (ManagementObject obj in searcher.Get())
-                {
-                    fullChargeCapacity = Convert.ToUInt32(obj["FullChargedCapacity"]);
-                    break;
-                }
-            }
+                fullChargeCapacity = GetUInt32OrDefault(obj, "FullChargedCapacity");
+            });
 
             uint cycleCount = 0;
-            using (var searcher = new ManagementObjectSearcher(Scope, "SELECT * FROM BatteryCycleCount"))
+            QueryFirstInstance("BatteryCycleCount", obj =>
             {
-                foreach (ManagementObject obj in searcher.Get())
-                {
-                    cycleCount = Convert.ToUInt32(obj["CycleCount"]);
-                    break;
-                }
-            }
+                cycleCount = GetUInt32OrDefault(obj, "CycleCount");
+            });
 
             uint remainingCapacity = 0, voltage = 0, chargeRate = 0, dischargeRate = 0;
             bool charging = false, discharging = false, powerOnline = false;
-            using (var searcher = new ManagementObjectSearcher(Scope, "SELECT * FROM BatteryStatus"))
+            QueryFirstInstance("BatteryStatus", obj =>
             {
-                foreach (ManagementObject obj in searcher.Get())
-                {
-                    remainingCapacity = Convert.ToUInt32(obj["RemainingCapacity"]);
-                    voltage = Convert.ToUInt32(obj["Voltage"]);
-                    chargeRate = ClampRate(obj["ChargeRate"]);
-                    dischargeRate = ClampRate(obj["DischargeRate"]);
-                    charging = Convert.ToBoolean(obj["Charging"]);
-                    discharging = Convert.ToBoolean(obj["Discharging"]);
-                    powerOnline = Convert.ToBoolean(obj["PowerOnline"]);
-                    break;
-                }
-            }
+                remainingCapacity = GetUInt32OrDefault(obj, "RemainingCapacity");
+                voltage = GetUInt32OrDefault(obj, "Voltage");
+                chargeRate = ClampRate(GetUInt32OrDefault(obj, "ChargeRate"));
+                dischargeRate = ClampRate(GetUInt32OrDefault(obj, "DischargeRate"));
+                charging = GetBooleanOrDefault(obj, "Charging");
+                discharging = GetBooleanOrDefault(obj, "Discharging");
+                powerOnline = GetBooleanOrDefault(obj, "PowerOnline");
+            });
 
             // Not every OEM firmware exposes battery temperature; treat its absence as "unknown".
             double? temperatureCelsius = null;
-            try
+            QueryFirstInstance("BatteryTemperature", obj =>
             {
-                using var searcher = new ManagementObjectSearcher(Scope, "SELECT * FROM BatteryTemperature");
-                foreach (ManagementObject obj in searcher.Get())
+                var deciKelvin = GetUInt32OrDefault(obj, "Temperature");
+                if (deciKelvin > 0)
                 {
-                    // Reported in tenths of a degree Kelvin.
-                    var deciKelvin = Convert.ToUInt32(obj["Temperature"]);
                     temperatureCelsius = (deciKelvin / 10.0) - 273.15;
-                    break;
                 }
-            }
-            catch (ManagementException)
-            {
-                temperatureCelsius = null;
-            }
+            });
 
             return new AcpiBatteryReading(
                 designCapacity,
@@ -109,12 +89,57 @@ public sealed class BatteryService
     }
 
     /// <summary>
+    /// Runs a WMI class query and invokes <paramref name="onFound"/> for the first instance, if
+    /// any. A missing/erroring WMI class is treated as "no data for this class" rather than
+    /// failing the entire reading - different classes come from different (sometimes absent)
+    /// OEM driver components.
+    /// </summary>
+    private static void QueryFirstInstance(string className, Action<ManagementBaseObject> onFound)
+    {
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(Scope, $"SELECT * FROM {className}");
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                onFound(obj);
+                break;
+            }
+        }
+        catch (ManagementException)
+        {
+            // This specific class isn't available on this hardware/driver - leave defaults.
+        }
+    }
+
+    private static uint GetUInt32OrDefault(ManagementBaseObject obj, string propertyName)
+    {
+        foreach (PropertyData prop in obj.Properties)
+        {
+            if (prop.Name == propertyName)
+            {
+                return prop.Value is null ? 0u : Convert.ToUInt32(prop.Value);
+            }
+        }
+
+        return 0u;
+    }
+
+    private static bool GetBooleanOrDefault(ManagementBaseObject obj, string propertyName)
+    {
+        foreach (PropertyData prop in obj.Properties)
+        {
+            if (prop.Name == propertyName)
+            {
+                return prop.Value is not null && Convert.ToBoolean(prop.Value);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// ACPI reports an all-ones value (0xFFFFFFFF, "unknown rate") on some firmware; treat that as zero
     /// rather than a multi-gigawatt charge rate.
     /// </summary>
-    private static uint ClampRate(object? value)
-    {
-        var rate = Convert.ToUInt32(value);
-        return rate == uint.MaxValue ? 0u : rate;
-    }
+    private static uint ClampRate(uint rate) => rate == uint.MaxValue ? 0u : rate;
 }
