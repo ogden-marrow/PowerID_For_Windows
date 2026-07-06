@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using PowerID.Utilities;
 
 namespace PowerID.Views.Settings;
