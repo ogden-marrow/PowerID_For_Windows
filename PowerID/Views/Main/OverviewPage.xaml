@@ -3,9 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:components="using:PowerID.Views.Components"
-    xmlns:utils="using:PowerID.Utilities"
-    mc:Ignorable="d"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+    xmlns:utils="using:PowerID.Utilities">
 
     <Page.Resources>
         <utils:BoolToVisibilityConverter x:Key="BoolToVisibility" />
