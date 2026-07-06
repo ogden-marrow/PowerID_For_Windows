@@ -15,9 +15,26 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    # PowerID.Core and PowerID.Tests are plain net8.0 with no Windows/WinUI dependency, so the
+    # actual battery-math/formatting test suite runs fast on Linux without needing the Windows
+    # App SDK toolchain at all.
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Run unit tests
+      run: dotnet test PowerID.Tests/PowerID.Tests.csproj -c Release --logger "console;verbosity=normal"
+
   build:
-    # Pinned rather than windows-latest: Microsoft.WindowsAppSDK 1.6's XamlCompiler.exe is a
-    # .NET Framework 4.7.2 tool that has been unreliable on bleeding-edge preview runner images.
+    needs: test
     runs-on: windows-2022
 
     steps:
@@ -28,6 +45,12 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
+
+    # dotnet build's own MSBuild host has been unreliable at launching XamlCompiler.exe (a .NET
+    # Framework 4.7.2 external tool) - it fails instantly with a bare exit code and no diagnostic
+    # output. The full Visual Studio msbuild.exe already on this runner hosts it correctly.
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v2
 
     - name: Install icon generator dependencies
       run: pip install --quiet Pillow
@@ -40,7 +63,7 @@ jobs:
       run: dotnet restore PowerID.sln
 
     - name: Build (Release, x64)
-      run: dotnet build PowerID.sln -c Release -p:Platform=x64 --no-restore -v:normal -bl:msbuild.binlog
+      run: msbuild PowerID.sln /p:Configuration=Release /p:Platform=x64 /v:normal /bl:msbuild.binlog /nr:false
 
     - name: Dump XAML compiler diagnostics on failure
       if: failure()
@@ -68,8 +91,6 @@ jobs:
 
   publish:
     needs: build
-    # Pinned rather than windows-latest: Microsoft.WindowsAppSDK 1.6's XamlCompiler.exe is a
-    # .NET Framework 4.7.2 tool that has been unreliable on bleeding-edge preview runner images.
     runs-on: windows-2022
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
@@ -82,6 +103,11 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    # Same reasoning as the build job: use the full msbuild.exe, not `dotnet publish`, so
+    # XamlCompiler.exe (a .NET Framework 4.7.2 external tool) launches correctly.
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v2
+
     - name: Install icon generator dependencies
       run: pip install --quiet Pillow
 
@@ -89,16 +115,21 @@ jobs:
       run: python generate_icon.py
       shell: pwsh
 
+    - name: Restore dependencies
+      run: dotnet restore PowerID.sln
+
     - name: Publish self-contained x64 build
       run: |
-        dotnet publish PowerID/PowerID.csproj `
-          -c Release `
-          -p:Platform=x64 `
-          -p:WindowsPackageType=None `
-          -p:WindowsAppSDKSelfContained=true `
-          -p:SelfContained=true `
-          -r win-x64 `
-          -o publish/PowerID
+        msbuild PowerID/PowerID.csproj `
+          /t:Publish `
+          /p:Configuration=Release `
+          /p:Platform=x64 `
+          /p:WindowsPackageType=None `
+          /p:WindowsAppSDKSelfContained=true `
+          /p:SelfContained=true `
+          /p:RuntimeIdentifier=win-x64 `
+          /p:PublishDir=publish\PowerID `
+          /nr:false
       shell: pwsh
 
     - name: Create ZIP archive

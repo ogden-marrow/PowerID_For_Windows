@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.UI.Dispatching;
+using PowerID.Core;
 using PowerID.Services;
 
 namespace PowerID.ViewModels;
@@ -73,76 +74,28 @@ public sealed class BatteryMonitor : INotifyPropertyChanged, IDisposable
         _timer = new Timer(_ => UpdateBatteryInfo(), null, interval, interval);
     }
 
-    /// <summary>Reads the battery service and publishes the results to the UI thread.</summary>
+    /// <summary>Reads the battery service, computes a snapshot, and publishes it to the UI thread.</summary>
     public void UpdateBatteryInfo()
     {
         var reading = _batteryService.GetReading();
-
-        var designVoltageVolts = reading.DesignVoltageMillivolts / 1000.0;
-        var designCapacityMah = designVoltageVolts > 0
-            ? (int)Math.Round(reading.DesignCapacityMilliwattHours / designVoltageVolts)
-            : 0;
-        var maxCapacityMah = designVoltageVolts > 0
-            ? (int)Math.Round(reading.FullChargeCapacityMilliwattHours / designVoltageVolts)
-            : 0;
-        var currentCapacityMah = designVoltageVolts > 0
-            ? (int)Math.Round(reading.RemainingCapacityMilliwattHours / designVoltageVolts)
-            : 0;
-
-        var level = maxCapacityMah > 0 ? (currentCapacityMah * 100) / maxCapacityMah : 0;
-        var health = designCapacityMah > 0 ? (maxCapacityMah * 100) / designCapacityMah : 0;
-
-        var voltage = reading.VoltageMillivolts / 1000.0;
-
-        // Windows/ACPI exposes power (mW), not current (mA) like macOS's SMC does, so amperage is
-        // derived from wattage and voltage rather than read directly.
-        double wattage;
-        double amperage;
-        if (reading.Charging)
-        {
-            wattage = reading.ChargeRateMilliwatts / 1000.0;
-            amperage = voltage > 0 ? (reading.ChargeRateMilliwatts / voltage) : 0.0;
-        }
-        else if (reading.Discharging)
-        {
-            wattage = reading.DischargeRateMilliwatts / 1000.0;
-            amperage = voltage > 0 ? -(reading.DischargeRateMilliwatts / voltage) : 0.0;
-        }
-        else
-        {
-            wattage = 0.0;
-            amperage = 0.0;
-        }
-
-        var timeToFullCharge = 0;
-        if (reading.Charging && reading.ChargeRateMilliwatts > 0)
-        {
-            var remainingMilliwattHours = reading.FullChargeCapacityMilliwattHours - reading.RemainingCapacityMilliwattHours;
-            if (remainingMilliwattHours > 0)
-            {
-                timeToFullCharge = (int)Math.Round(remainingMilliwattHours / (double)reading.ChargeRateMilliwatts * 60.0);
-            }
-        }
-
-        var powerSourceType = reading.PowerOnline ? "AC Power" : "Battery";
-        var lastUpdate = DateTimeOffset.Now.ToString("T");
+        var snapshot = BatterySnapshotCalculator.Compute(reading, DateTimeOffset.Now);
 
         _dispatcherQueue.TryEnqueue(() =>
         {
-            BatteryLevel = level;
-            IsCharging = reading.Charging;
-            BatteryHealth = health;
-            CycleCount = (int)reading.CycleCount;
-            CurrentCapacity = currentCapacityMah;
-            MaxCapacity = maxCapacityMah;
-            DesignCapacity = designCapacityMah;
-            Voltage = voltage;
-            Amperage = amperage;
-            Temperature = reading.TemperatureCelsius ?? 0.0;
-            ChargingWattage = wattage;
-            TimeToFullCharge = timeToFullCharge;
-            PowerSourceType = powerSourceType;
-            LastUpdate = lastUpdate;
+            BatteryLevel = snapshot.Level;
+            IsCharging = snapshot.IsCharging;
+            BatteryHealth = snapshot.Health;
+            CycleCount = snapshot.CycleCount;
+            CurrentCapacity = snapshot.CurrentCapacity;
+            MaxCapacity = snapshot.MaxCapacity;
+            DesignCapacity = snapshot.DesignCapacity;
+            Voltage = snapshot.Voltage;
+            Amperage = snapshot.Amperage;
+            Temperature = snapshot.Temperature;
+            ChargingWattage = snapshot.Wattage;
+            TimeToFullCharge = snapshot.TimeToFullCharge;
+            PowerSourceType = snapshot.PowerSourceType;
+            LastUpdate = snapshot.Timestamp.ToString("T");
         });
     }
 

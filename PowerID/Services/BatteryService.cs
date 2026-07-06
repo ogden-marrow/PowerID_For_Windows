@@ -1,24 +1,7 @@
 using System.Management;
+using PowerID.Models;
 
 namespace PowerID.Services;
-
-/// <summary>Raw battery data as reported by the ACPI-backed WMI classes in the root\WMI namespace.</summary>
-public sealed record AcpiBatteryReading(
-    uint DesignCapacityMilliwattHours,
-    uint DesignVoltageMillivolts,
-    uint FullChargeCapacityMilliwattHours,
-    uint RemainingCapacityMilliwattHours,
-    uint VoltageMillivolts,
-    uint ChargeRateMilliwatts,
-    uint DischargeRateMilliwatts,
-    bool Charging,
-    bool Discharging,
-    bool PowerOnline,
-    uint CycleCount,
-    double? TemperatureCelsius)
-{
-    public static readonly AcpiBatteryReading Empty = new(0, 0, 0, 0, 0, 0, 0, false, false, false, 0, null);
-}
 
 /// <summary>
 /// Reads battery information from the ACPI "MSBatteryClass" WMI classes exposed under root\WMI.

@@ -1,6 +1,6 @@
 using System.Drawing;
 using System.Runtime.InteropServices;
-using PowerID.Utilities;
+using PowerID.Core;
 using PowerID.ViewModels;
 
 namespace PowerID.Services;
@@ -201,8 +201,7 @@ public sealed class TrayIconService : IDisposable
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             g.Clear(Color.Transparent);
 
-            var (startColor, _) = BatteryFormatter.BatteryGradientColors(level, isCharging);
-            var fillColor = Color.FromArgb(startColor.A, startColor.R, startColor.G, startColor.B);
+            var (fillColor, _) = BatteryColorLogic.BatteryGradientColors(level, isCharging);
 
             using var bodyPen = new Pen(Color.White, 2f);
             var bodyRect = new Rectangle(2, 8, 24, 16);

@@ -33,6 +33,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PowerID.Core\PowerID.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Assets\*.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -106,27 +106,43 @@ See [Building from Source](#-building-from-source) below.
 
 ### Command Line Build
 
+Use the full `msbuild.exe` (from the Visual Studio/Build Tools installation), not `dotnet build` -
+the .NET SDK's own MSBuild host has been unreliable at launching `XamlCompiler.exe`, the .NET
+Framework 4.7.2 tool that compiles `.xaml` files:
+
 ```powershell
 dotnet restore PowerID.sln
-dotnet build PowerID.sln -c Release -p:Platform=x64
+msbuild PowerID.sln /p:Configuration=Release /p:Platform=x64
 ```
 
 ### Unpackaged, self-contained publish (no MSIX/signing required)
 
 ```powershell
-dotnet publish PowerID/PowerID.csproj -c Release -p:Platform=x64 `
-  -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true -p:SelfContained=true `
-  -r win-x64 -o publish/PowerID
+msbuild PowerID/PowerID.csproj /t:Publish /p:Configuration=Release /p:Platform=x64 `
+  /p:WindowsPackageType=None /p:WindowsAppSDKSelfContained=true /p:SelfContained=true `
+  /p:RuntimeIdentifier=win-x64 /p:PublishDir=publish\PowerID
 ```
 
 The runnable app will be at `publish/PowerID/PowerID.exe`.
+
+### Running the Tests
+
+`PowerID.Core` (the battery math and formatting logic) has no Windows/WinUI dependency, so its
+test suite in `PowerID.Tests` runs anywhere with just the .NET 8 SDK - no Windows required:
+
+```powershell
+dotnet test PowerID.Tests/PowerID.Tests.csproj
+```
+
+CI runs this on every push/PR (on `ubuntu-latest`, before the slower Windows build even starts) -
+see the `test` job in `.github/workflows/build-release.yml`.
 
 ---
 
 ## 🏗 Project Structure
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full breakdown, MVVM structure, and a macOS → Windows API mapping
-table (IOKit ↔ WMI, `NSStatusItem` ↔ `Shell_NotifyIcon`, etc.).
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full breakdown, the `PowerID.Core`/`PowerID`/`PowerID.Tests` split,
+MVVM structure, and a macOS → Windows API mapping table (IOKit ↔ WMI, `NSStatusItem` ↔ `Shell_NotifyIcon`, etc.).
 
 ---
 
