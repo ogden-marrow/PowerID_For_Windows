@@ -1,3 +1,4 @@
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using PowerID.Utilities;
@@ -25,18 +26,18 @@ public sealed partial class OverviewPage : Page
         InitializeComponent();
     }
 
-    private static string ChargingGlyph(bool isCharging) => isCharging ? "⚡" : "\U0001F50B";
+    private string ChargingGlyph(bool isCharging) => isCharging ? "⚡" : "\U0001F50B";
 
-    private static string ChargingStatusText(bool isCharging) => isCharging ? "Charging" : "On Battery";
+    private string ChargingStatusText(bool isCharging) => isCharging ? "Charging" : "On Battery";
 
-    private static Color StatusColor(bool isCharging) => isCharging ? Colors.Green : Colors.DodgerBlue;
+    private Color StatusColor(bool isCharging) => isCharging ? Colors.Green : Colors.DodgerBlue;
 
-    private static string FormatWattage(double wattage) => $"{wattage:0.0} W";
+    private string FormatWattage(double wattage) => $"{wattage:0.0} W";
 
-    private static string FormatPercent(int value) => $"{value}%";
+    private string FormatPercent(int value) => $"{value}%";
 
-    private static Visibility ShowTimeToFull(bool isCharging, int timeToFullCharge) =>
+    private Visibility ShowTimeToFull(bool isCharging, int timeToFullCharge) =>
         isCharging && timeToFullCharge > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-    private static string FormatLastUpdated(string lastUpdate) => $"Last updated: {lastUpdate}";
+    private string FormatLastUpdated(string lastUpdate) => $"Last updated: {lastUpdate}";
 }
