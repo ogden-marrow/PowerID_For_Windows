@@ -14,6 +14,8 @@ rebuilt from scratch on the Windows App SDK (no Electron, no web views).
 
 [Features](#-features) • [Installation](#-installation) • [Building](#-building-from-source) • [Architecture](ARCHITECTURE.md)
 
+![PowerID Overview screenshot](docs/screenshots/overview.png)
+
 </div>
 
 ---
