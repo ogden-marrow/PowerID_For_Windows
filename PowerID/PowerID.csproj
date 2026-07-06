@@ -16,6 +16,12 @@
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <WindowsPackageType>MSIX</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Recommended by Microsoft for any unpackaged (WindowsPackageType=None) build so WinUI's
+         native XAML engine can activate its own runtime classes without an MSIX package. Note:
+         this alone did NOT fix a 0xC000027B startup crash we hit when combining unpackaged with
+         WindowsAppSDKSelfContained=true - that combination has an unresolved WinAppSDK bug, which
+         is why the release pipeline ships MSIX instead (see build-release.yml). -->
+    <WindowsAppSDKUndockedRegFreeWinRTInitialize>true</WindowsAppSDKUndockedRegFreeWinRTInitialize>
     <Version>1.0.0</Version>
     <!-- Allows `dotnet build`/`dotnet restore` to at least resolve this Windows-targeted TFM from non-Windows CI/dev machines. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>

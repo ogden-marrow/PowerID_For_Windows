@@ -118,23 +118,42 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore PowerID.sln
 
-    - name: Publish self-contained x64 build
+    # The self-contained *unpackaged* deployment mode (WindowsPackageType=None) crashes on launch
+    # with 0xC000027B in Microsoft.UI.Xaml.dll - a known-hard WinAppSDK bug specific to combining
+    # self-contained bundling with reg-free WinRT activation (see PowerID/PowerID.csproj comment on
+    # WindowsAppSDKUndockedRegFreeWinRTInitialize). A framework-dependent unpackaged build launches
+    # fine, but MSIX sidesteps the whole class of problem: packaged apps get WinRT activation
+    # through package identity, so we ship a signed MSIX instead. This is also exactly the artifact
+    # format the Microsoft Store submission pipeline needs.
+    - name: Decode signing certificate
+      shell: pwsh
+      run: |
+        $pfxBytes = [Convert]::FromBase64String("${{ secrets.POWERID_PFX_BASE64 }}")
+        [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\PowerID.pfx", $pfxBytes)
+
+    - name: Build signed MSIX package
       run: |
         msbuild PowerID/PowerID.csproj `
-          /t:Publish `
+          /t:_GenerateAppxPackage `
           /p:Configuration=Release `
           /p:Platform=x64 `
-          /p:WindowsPackageType=None `
-          /p:WindowsAppSDKSelfContained=true `
-          /p:SelfContained=true `
-          /p:RuntimeIdentifier=win-x64 `
-          /p:PublishDir=publish\PowerID `
+          /p:AppxBundlePlatforms=x64 `
+          /p:AppxBundle=Never `
+          /p:UapAppxPackageBuildMode=SideloadOnly `
+          /p:GenerateAppInstallerFile=false `
+          /p:AppxPackageDir=AppPackages\ `
+          /p:AppxPackageSigningEnabled=true `
+          /p:PackageCertificateKeyFile="$env:RUNNER_TEMP\PowerID.pfx" `
+          /p:PackageCertificatePassword="${{ secrets.POWERID_PFX_PASSWORD }}" `
           /nr:false
       shell: pwsh
 
-    - name: Create ZIP archive
-      run: Compress-Archive -Path publish/PowerID/* -DestinationPath PowerID-win-x64.zip
+    - name: Locate and rename MSIX artifact
       shell: pwsh
+      run: |
+        $msix = Get-ChildItem -Path PowerID\AppPackages -Filter *.msix -Recurse | Select-Object -First 1
+        Copy-Item $msix.FullName -Destination PowerID-win-x64.msix
+        Copy-Item signing\PowerID.cer -Destination PowerID.cer
 
     - name: Get version from tag
       id: get_version
@@ -151,7 +170,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: PowerID-win-x64.zip
+        files: |
+          PowerID-win-x64.msix
+          PowerID.cer
         name: PowerID v${{ steps.get_version.outputs.version }}
         body: |
           ## PowerID v${{ steps.get_version.outputs.version }}
@@ -159,13 +180,16 @@ jobs:
           Advanced Battery Monitoring for Windows
 
           ### Installation
-          1. Download `PowerID-win-x64.zip`
-          2. Unzip it anywhere
-          3. Run `PowerID.exe`
+          This package is self-signed (not yet on the Microsoft Store), so Windows won't trust it
+          out of the box. One-time setup:
+          1. Download both `PowerID-win-x64.msix` and `PowerID.cer`.
+          2. Right-click `PowerID.cer` > **Install Certificate** > **Local Machine** > place it in
+             the **Trusted People** store (requires admin).
+          3. Double-click `PowerID-win-x64.msix` to install, or run
+             `Add-AppxPackage -Path .\PowerID-win-x64.msix` in PowerShell.
 
-          ### Note
-          This build is unsigned. Windows SmartScreen may warn on first launch -
-          choose "More info" > "Run anyway".
+          If installation still fails, enable **Developer Mode** under
+          **Settings > Privacy & security > For developers**.
 
           ### System Requirements
           - Windows 10 version 1809 (build 17763) or later, x64
@@ -179,5 +203,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PowerID-${{ steps.get_version.outputs.version }}
-        path: PowerID-win-x64.zip
+        path: |
+          PowerID-win-x64.msix
+          PowerID.cer
         retention-days: 30
