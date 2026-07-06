@@ -67,7 +67,7 @@
                     <components:SectionHeader Icon="&#128268;" Title="Power Source" />
                     <Border Style="{StaticResource SectionCardStyle}">
                         <StackPanel>
-                            <components:DetailRow Label="Status" Value="{x:Bind ChargingStatusText(BatteryMonitor.IsCharging), Mode=OneWay}" />
+                            <components:DetailRow Label="Status" Value="{x:Bind BatteryMonitor.StatusText, Mode=OneWay}" />
                             <components:DetailRow Label="Type" Value="{x:Bind BatteryMonitor.PowerSourceType, Mode=OneWay}" />
                             <components:DetailRow
                                 Visibility="{x:Bind BatteryMonitor.TimeToFullCharge, Mode=OneWay, Converter={StaticResource PositiveToVisibility}}"

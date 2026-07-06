@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using PowerID.Services;
 using PowerID.Utilities;
 
 namespace PowerID.Views.Settings;
@@ -14,14 +15,16 @@ public sealed partial class GeneralSettingsView : UserControl
         InitializeComponent();
     }
 
-    public void Initialize(SettingsStore settings)
+    public async void Initialize(SettingsStore settings)
     {
         _settings = settings;
         _isLoadingValues = true;
         UpdateIntervalSlider.Value = settings.UpdateIntervalSeconds;
         UpdateIntervalLabel.Text = $"{settings.UpdateIntervalSeconds:0.0}s";
         ShowInTrayToggle.IsOn = settings.ShowInTrayIcon;
-        LaunchAtLoginToggle.IsOn = settings.LaunchAtLogin;
+        // The startup task's own registration state is authoritative - the user can also flip
+        // this from Task Manager's Startup tab, which a locally-persisted preference wouldn't see.
+        LaunchAtLoginToggle.IsOn = await StartupTaskService.IsEnabledAsync();
         _isLoadingValues = false;
     }
 
@@ -38,9 +41,19 @@ public sealed partial class GeneralSettingsView : UserControl
         _settings.ShowInTrayIcon = ShowInTrayToggle.IsOn;
     }
 
-    private void LaunchAtLoginToggle_Toggled(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private async void LaunchAtLoginToggle_Toggled(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         if (_isLoadingValues || _settings is null) return;
-        _settings.LaunchAtLogin = LaunchAtLoginToggle.IsOn;
+        var requested = LaunchAtLoginToggle.IsOn;
+        var actual = await StartupTaskService.SetEnabledAsync(requested);
+        _settings.LaunchAtLogin = actual;
+        if (actual != requested)
+        {
+            // Reflect reality if the OS consent prompt was declined or policy blocked it, without
+            // re-entering this handler (avoid IsOn -> Toggled -> IsOn feedback loop).
+            _isLoadingValues = true;
+            LaunchAtLoginToggle.IsOn = actual;
+            _isLoadingValues = false;
+        }
     }
 }

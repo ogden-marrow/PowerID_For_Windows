@@ -11,7 +11,15 @@ public static class BatterySnapshotCalculator
 {
     public static BatterySnapshot Compute(AcpiBatteryReading reading, DateTimeOffset now)
     {
-        var designVoltageVolts = reading.DesignVoltageMillivolts / 1000.0;
+        var voltage = reading.VoltageMillivolts / 1000.0;
+
+        // Some OEM firmware doesn't expose BatteryStaticData over WMI at all (no DesignVoltage),
+        // even though BatteryStatus/BatteryFullChargedCapacity (a different WMI class) report real
+        // capacities. Design voltage and current voltage are close enough for Li-ion batteries near
+        // nominal charge that falling back to current voltage beats collapsing every capacity to 0.
+        var designVoltageVolts = reading.DesignVoltageMillivolts > 0
+            ? reading.DesignVoltageMillivolts / 1000.0
+            : voltage;
 
         var designCapacityMah = ToMilliampHours(reading.DesignCapacityMilliwattHours, designVoltageVolts);
         var maxCapacityMah = ToMilliampHours(reading.FullChargeCapacityMilliwattHours, designVoltageVolts);
@@ -19,8 +27,6 @@ public static class BatterySnapshotCalculator
 
         var level = maxCapacityMah > 0 ? (currentCapacityMah * 100) / maxCapacityMah : 0;
         var health = designCapacityMah > 0 ? (maxCapacityMah * 100) / designCapacityMah : 0;
-
-        var voltage = reading.VoltageMillivolts / 1000.0;
 
         // Windows/ACPI exposes power (mW), not current (mA) like macOS's SMC does, so amperage is
         // derived from wattage and voltage rather than read directly.
@@ -66,6 +72,19 @@ public static class BatterySnapshotCalculator
         }
 
         return (0.0, 0.0);
+    }
+
+    /// <summary>
+    /// Human-readable charging status. Distinguishes "on battery" from "plugged in but not
+    /// actively charging" (which is either "fully charged" or, more rarely, mid-calibration) -
+    /// collapsing these into a single "on battery"/"charging" binary is misleading when the
+    /// device is actually connected to AC power.
+    /// </summary>
+    public static string StatusText(BatterySnapshot snapshot)
+    {
+        if (snapshot.IsCharging) return "Charging";
+        if (snapshot.PowerSourceType != "AC Power") return "On Battery";
+        return snapshot.Level >= 100 ? "Fully Charged" : "Plugged In";
     }
 
     private static int ComputeTimeToFullChargeMinutes(AcpiBatteryReading reading)

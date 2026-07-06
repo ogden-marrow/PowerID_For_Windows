@@ -63,6 +63,9 @@ public sealed class BatteryMonitor : INotifyPropertyChanged, IDisposable
     private string _powerSourceType = "Unknown";
     public string PowerSourceType { get => _powerSourceType; private set => SetField(ref _powerSourceType, value); }
 
+    private string _statusText = string.Empty;
+    public string StatusText { get => _statusText; private set => SetField(ref _statusText, value); }
+
     private string _lastUpdate = string.Empty;
     public string LastUpdate { get => _lastUpdate; private set => SetField(ref _lastUpdate, value); }
 
@@ -95,6 +98,7 @@ public sealed class BatteryMonitor : INotifyPropertyChanged, IDisposable
             ChargingWattage = snapshot.Wattage;
             TimeToFullCharge = snapshot.TimeToFullCharge;
             PowerSourceType = snapshot.PowerSourceType;
+            StatusText = BatterySnapshotCalculator.StatusText(snapshot);
             LastUpdate = snapshot.Timestamp.ToString("T");
         });
     }
